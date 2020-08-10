@@ -1,0 +1,78 @@
+substitutions:
+  site: site_name
+  device: site_unique_device
+  client: client
+
+esphome:
+  name: "${client}_${site}_${device}"
+  platform: ESP8266
+  board: esp8285
+  arduino_version: 2.4.2
+
+wifi:
+  ssid: wlan_ssid
+  password: wlan_password
+
+api:
+
+mqtt:
+  broker: mqtt_broker
+
+ota:
+logger:
+  baud_rate: 0
+  level: INFO
+
+uart:
+  rx_pin: RX
+  baud_rate: 4800
+
+switch:
+  - platform: gpio
+    name: "${device} Relay"
+    pin: GPIO12
+    id: relay
+
+output:
+  # Register the green LED as a dimmable output ....
+  - platform: esp8266_pwm
+    id: s31_green_led
+    pin:
+      number: GPIO13
+      inverted: True
+
+light:
+  # ... and then make a light out of it.
+  - platform: monochromatic
+    name: "${device} Blue LED"
+    output: s31_green_led
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      - switch.toggle: relay
+    name: "${device} Button"
+  - platform: status
+    name: "${device} Status"
+sensor:
+   - platform: cse7766agg
+     update_interval: 15s
+     current:
+       state_topic: "${client}/${site}/${device}/current"
+       name: "${device} Current"
+     current_max:
+       state_topic: "${client}/${site}/${device}/current_max"
+       name: "${device} Current Max"
+     current_min:
+       state_topic: "${client}/${site}/${device}/current_min"
+       name: "${device} Current Min"
+     voltage:
+       state_topic: "${client}/${site}/${device}/voltage"
+       name: "${device} Voltage"
+     power:
+       state_topic: "${client}/${site}/${device}/power"
+       name: "${device} Power"
